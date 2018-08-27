@@ -1,6 +1,6 @@
 Clone the repository using:-
 
-git clone https://m4vr1ck@bitbucket.org/m4vr1ck/proxy-server.git
+git clone https://<<USERNAME>>@bitbucket.org/m4vr1ck/proxy-server.git
 
 Go to the directory where the repository where the code is cloned.
 
