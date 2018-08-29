@@ -71,10 +71,13 @@ app.use((req, res, next) => {
     if (url.indexOf("/login.html") != -1 ||
         url.indexOf("/login.css") != -1 ||
         url.indexOf("/login.js") != -1 ||
-        url.indexOf("/main.css") != -1 ||
         url.indexOf("/login.png") != -1 ||
         url.indexOf("/bootstrap.min.css") != -1 ||
-        (url == "/login" && method == "POST")) {
+        (url == "/login" && method == "POST") ||
+        (url == "/register" && method == "POST") ||
+        (url == "/resendActivationLink" && method == "POST") ||
+        (url == "/resetPassword" && method == "POST") ||
+        (url.indexOf("/activate")!=-1 && method == "GET")) {
         try {
             //Check if the token is a valid token, if not throw an exception. If valid even though user requested login page, load the index.html instead
             jsonwebtoken.verify(req.cookies.token, jwt_key)
@@ -179,12 +182,13 @@ app.use((req, res, next) => {
 app.all("*.html", (req, res) => {
     var url = "";
     //for login and notAuthorized, UAM serves up! rest all are served up in BPM
-    if (String(req.url).indexOf("login.css") != -1 || String(req.url).indexOf("main.css") != -1) {
+    if (String(req.url).indexOf("login.html") != -1 || 
+    String(req.url).indexOf("notAuthorized.html") != -1) {
         url = uam_url;
     } else {
         url = bpm_url;
     }
-
+    console.log(url + req.url);
     //Serving the HTML Pages
     fetch(url + req.url, {
         credentials: "include",
@@ -205,7 +209,7 @@ app.all("*.html", (req, res) => {
 //Serving the JS files
 app.all("*.js", (req, res) => {
     var url = ""
-    if (String(req.url).indexOf("login.css") != -1 || String(req.url).indexOf("main.css") != -1) {
+    if (String(req.url).indexOf("login.js") != -1) {
         url = uam_url;
     } else {
         url = bpm_url;
@@ -230,7 +234,7 @@ app.all("*.js", (req, res) => {
 app.all("*.css", (req, res) => {
     console.log(req.url)
     var url = ""
-    if (String(req.url).indexOf("login.css") != -1 || String(req.url).indexOf("main.css") != -1) {
+    if (String(req.url).indexOf("login.css") != -1 || String(req.url).indexOf("bootstrap.min.css") != -1) {
         url = uam_url;
     } else {
         url = bpm_url;
@@ -326,6 +330,6 @@ app.use("*", (req, res, next) => {
 })
 
 //Starting the server
-app.listen(port, "127.0.0.1", () => {
+app.listen(port, "0.0.0.0", () => {
     console.log("Proxy started at:-" + port);
 })

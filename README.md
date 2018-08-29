@@ -8,6 +8,7 @@ Set 4 process environment variables before proceeding:-
 WINDOWS:-
 set UAM_URL="http://someurl:someport"
 set BPM_URL="http://someurl:someport"
+set PROXY_PORT="<<PORT>>"
 set DMS_URL="http://someurl:someport"
 set JWT_KEY="keyofyourchoice"
 
