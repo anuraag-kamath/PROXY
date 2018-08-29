@@ -46,6 +46,8 @@ app.use((req, res, next) => {
     next();
 })
 
+app.use(express.static(__dirname + "/public/resources/images"));
+
 //Middleware to check whether user is authenticated
 app.use((req, res, next) => {
 
@@ -183,6 +185,34 @@ app.use((req, res, next) => {
 
 //Serving the HTML pages
 app.all("*.html", (req, res) => {
+    var url = "";
+    //for login and notAuthorized, UAM serves up! rest all are served up in BPM
+    if (String(req.url).indexOf("login.html") != -1 ||
+        String(req.url).indexOf("notAuthorized.html") != -1) {
+        url = uam_url;
+    } else {
+        url = bpm_url;
+    }
+    console.log(url + req.url);
+    //Serving the HTML Pages
+    fetch(url + req.url, {
+        credentials: "include",
+        method: "GET",
+        headers: {
+            "content-type": "application/json",
+            cookie: 'token=' + req.cookies.token + ';'
+        },
+        credentials: 'include'
+
+    }).then((prom) => prom.text())
+        .then((proxyRes) => {
+            res.writeHeader(200, { "Content-Type": "text/html" });
+            res.write(proxyRes);
+            res.end();
+        });
+})
+
+app.all("*.png", (req, res) => {
     var url = "";
     //for login and notAuthorized, UAM serves up! rest all are served up in BPM
     if (String(req.url).indexOf("login.html") != -1 ||
