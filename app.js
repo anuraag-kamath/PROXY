@@ -77,7 +77,7 @@ app.use((req, res, next) => {
         (url == "/register" && method == "POST") ||
         (url == "/resendActivationLink" && method == "POST") ||
         (url == "/resetPassword" && method == "POST") ||
-        (url.indexOf("/activate")!=-1 && method == "GET")) {
+        (url.indexOf("/activate") != -1 && method == "GET")) {
         try {
             //Check if the token is a valid token, if not throw an exception. If valid even though user requested login page, load the index.html instead
             jsonwebtoken.verify(req.cookies.token, jwt_key)
@@ -122,7 +122,9 @@ app.use((req, res, next) => {
             }
 
             //fetch the roles of the logged in user
-            fetch(uam_url + "/user/" + jsonwebtoken.verify(req.cookies.token, jwt_key).userId).then((prom) => prom.json()).then((doc) => {
+            fetch(uam_url + "/user/" + jsonwebtoken.verify(req.cookies.token, jwt_key).userId, {
+                cookie: 'token=' + req.cookies.token + ';'
+            }).then((prom) => prom.json()).then((doc) => {
 
                 if (doc != undefined) {
                     var roles = doc.roles;
@@ -130,6 +132,7 @@ app.use((req, res, next) => {
                     var notApplicable = [];
                     for (var i = 0; i < keys.length; i++) {
                         found = false;
+                        console.log(doc)
                         for (var j = 0; j < roles.length; j++) {
                             if (roles[j] == keys[i]) {
                                 found = true;
@@ -182,8 +185,8 @@ app.use((req, res, next) => {
 app.all("*.html", (req, res) => {
     var url = "";
     //for login and notAuthorized, UAM serves up! rest all are served up in BPM
-    if (String(req.url).indexOf("login.html") != -1 || 
-    String(req.url).indexOf("notAuthorized.html") != -1) {
+    if (String(req.url).indexOf("login.html") != -1 ||
+        String(req.url).indexOf("notAuthorized.html") != -1) {
         url = uam_url;
     } else {
         url = bpm_url;
