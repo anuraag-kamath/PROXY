@@ -194,7 +194,8 @@ app.all("*.html", (req, res) => {
         credentials: "include",
         method: "GET",
         headers: {
-            "content-type": "application/json"
+            "content-type": "application/json",
+            cookie: 'token=' + req.cookies.token + ';'
         },
         credentials: 'include'
 
@@ -218,7 +219,8 @@ app.all("*.js", (req, res) => {
     fetch(url + req.url, {
         method: "GET",
         headers: {
-            "content-type": "application/json"
+            "content-type": "application/json",
+            cookie: 'token=' + req.cookies.token + ';'
         },
         credentials: 'include'
     }).then((prom) => prom.text())
@@ -243,7 +245,8 @@ app.all("*.css", (req, res) => {
     fetch(url + req.url, {
         method: "GET",
         headers: {
-            "content-type": "application/json"
+            "content-type": "application/json",
+            cookie: 'token=' + req.cookies.token + ';'
         },
         credentials: 'include'
     }).then((prom) => prom.text())
