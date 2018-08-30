@@ -30,6 +30,7 @@ app.use(cookieParser())
 const uam_url = process.env.UAM_URL || "http://127.0.0.1:9100"
 const bpm_url = process.env.BPM_URL || "http://127.0.0.1:9099"
 const dms_url = process.env.DMS_URL || "http://127.0.0.1:9102"
+const obj_url = process.env.OBJ_URL || "http://127.0.0.1:9103"
 
 //the secret for generating the jwt_key. If nothing is provided in the process environment variable, default of alphabetagamma will be used!
 const jwt_key = process.env.JWT_KEY || "alphabetagamma"
@@ -63,6 +64,9 @@ app.use((req, res, next) => {
     } else if (req.url.indexOf("/api/dms") != -1) {
         req.apiDomain = "DMS"
         req.url = req.url.replace("/api/dms", "")
+    } else if (req.url.indexOf("/api/objs") != -1) {
+        req.apiDomain = "OBJ"
+        req.url = req.url.replace("/api/objs", "")
     }
     //After checking domain for the API call, URL and method being set
     url = req.url;
@@ -125,7 +129,10 @@ app.use((req, res, next) => {
 
             //fetch the roles of the logged in user
             fetch(uam_url + "/user/" + jsonwebtoken.verify(req.cookies.token, jwt_key).userId, {
-                cookie: 'token=' + req.cookies.token + ';'
+                headers: {
+                    "content-type": "application/json",
+                    cookie: 'token=' + req.cookies.token + ';'
+                }
             }).then((prom) => prom.json()).then((doc) => {
 
                 if (doc != undefined) {
@@ -134,7 +141,6 @@ app.use((req, res, next) => {
                     var notApplicable = [];
                     for (var i = 0; i < keys.length; i++) {
                         found = false;
-                        console.log(doc)
                         for (var j = 0; j < roles.length; j++) {
                             if (roles[j] == keys[i]) {
                                 found = true;
@@ -308,6 +314,8 @@ app.all("*", (req, res, next) => {
         url = bpm_url;
     } else if (domain == "DMS") {
         url = dms_url;
+    } else if (domain == "OBJ") {
+        url = obj_url;
     } else {
         //Not an API call
         next()
@@ -322,6 +330,14 @@ app.all("*", (req, res, next) => {
         body = JSON.stringify(req.body);
     }
 
+    console.log("@#");
+    console.log(JSON.stringify(req.body));
+
+    console.log(body);
+    console.log(domain);
+    console.log(url);
+    console.log(proxy_url);
+    console.log("@#");
     if (method == "GET" || method == "DELETE") {
 
         fetch(url + proxy_url, {
@@ -361,7 +377,6 @@ app.all("*", (req, res, next) => {
 
 //For all the calls that dont match any known URLs for the Application
 app.use("*", (req, res, next) => {
-    console.log("HERE?");
     res.redirect("/index.html")
 })
 
