@@ -81,6 +81,7 @@ app.use((req, res, next) => {
         url.indexOf("/bootstrap.min.css") != -1 ||
         (url == "/login" && method == "POST") ||
         (url == "/register" && method == "POST") ||
+        (url.indexOf("/activate")!=-1 && method == "POST") ||
         (url == "/resendActivationLink" && method == "POST") ||
         (url == "/resetPassword" && method == "POST") ||
         (url.indexOf("/activate") != -1 && method == "GET")) {
@@ -365,7 +366,8 @@ app.all("*", (req, res, next) => {
         }).then((prom) => prom.text())
             .then((proxyRes) => {
                 //In case the UAM responds with the token, setting the same in the response object
-                if (JSON.parse(proxyRes).token != undefined) {
+                
+                if(proxyRes.indexOf("Activated")==-1 && JSON.parse(proxyRes).token != undefined) {
                     res.cookie('token', JSON.parse(proxyRes).token, { httpOnly: true }).send(proxyRes)
 
                 } else {
