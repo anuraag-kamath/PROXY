@@ -33,7 +33,7 @@ const uam_url = process.env.UAM_URL || "http://127.0.0.1:9100"
 const bpm_url = process.env.BPM_URL || "http://127.0.0.1:9099"
 const dms_url = process.env.DMS_URL || "http://127.0.0.1:9102"
 const obj_url = process.env.OBJ_URL || "http://127.0.0.1:9103"
-const logging_enabled = process.env.LOGGING_ENABLED || false
+const logging_enabled = process.env.LOGGING_ENABLED || "N"
 //the secret for generating the jwt_key. If nothing is provided in the process environment variable, default of alphabetagamma will be used!
 const jwt_key = process.env.JWT_KEY || "alphabetagamma"
 
@@ -41,7 +41,7 @@ const jwt_key = process.env.JWT_KEY || "alphabetagamma"
 var port = process.env.PROXY_PORT || 9101
 
 logger = (activity, subActivity, subsubActivity, activityId, status, userId, ipAddress, method, domain) => {
-    if (logging_enabled == true) {
+    if (logging_enabled == "Y") {
         if (userId.length > 0) {
             user.findById(userId, (err, res1) => {
                 if (res1 != undefined && res1 !== 'undefined' && res1.user != undefined && res1.user !== 'undefined') {
@@ -77,7 +77,7 @@ app.use((req, res, next) => {
     if (req.cookies != undefined && req.cookies.token != undefined && req.cookies.token.length > 0) {
         userId = jsonwebtoken.verify(req.cookies.token, jwt_key).userId;
     }
-    logger(type, req.url, req.query, req.params, "success", userId, req.connection.remoteAddress, req.method);
+    logger(type, req.url, req.query, req.params, "success", userId, req.connection.remoteAddress, req.method, domain);
     next();
 })
 
