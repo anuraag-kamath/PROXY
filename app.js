@@ -21,8 +21,13 @@ const { mongoose } = require('./db/database')
 var app = express();
 
 //initializing the middleware for the application
-app.use(bodyparser.json());
+
+app.use(bodyparser.json({
+    limit: '50mb'
+}));
+
 app.use(bodyparser.urlencoded({
+    limit: '50mb',
     extended: true
 }))
 
@@ -40,13 +45,21 @@ const jwt_key = process.env.JWT_KEY || "alphabetagamma"
 //Proxy server port
 var port = process.env.PROXY_PORT || 9101
 
-logger = (activity, subActivity, subsubActivity, activityId, status, userId, ipAddress, method, domain) => {
+logger = (activity, url, params, status, userId, ipAddress, method, domain, token) => {
     if (logging_enabled == "Y") {
         if (userId.length > 0) {
-            user.findById(userId, (err, res1) => {
-                if (res1 != undefined && res1 !== 'undefined' && res1.user != undefined && res1.user !== 'undefined') {
+            fetch(uam_url + '/user/' + userId, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "content-type": "application/json",
+                    cookie: 'token=' + token + ';'
+
+                }
+            }).then((prom) => prom.text()).then((res1) => {
+                if (res1 != undefined && res1 !== 'undefined') {
                     act = new userActivity({
-                        activity, subActivity, subsubActivity, activityId, status, userId, user: res1.user.username, ipAddress, method, logDate: new Date(), domain
+                        activity, url, params, status, userId, user: res1.username, ipAddress, method, logDate: new Date(), domain
                     });
                     act.save();
 
@@ -57,7 +70,7 @@ logger = (activity, subActivity, subsubActivity, activityId, status, userId, ipA
 
         } else {
             act = new userActivity({
-                activity, subActivity, subsubActivity, activityId, status, userId, user: "", ipAddress, method, logDate: new Date(), domain
+                activity, url, params, status, userId, user: "", ipAddress, method, logDate: new Date(), domain
             });
             act.save();
 
@@ -77,9 +90,10 @@ app.use((req, res, next) => {
     if (req.cookies != undefined && req.cookies.token != undefined && req.cookies.token.length > 0) {
         userId = jsonwebtoken.verify(req.cookies.token, jwt_key).userId;
     }
-    logger(type, req.url, req.query, req.params, "success", userId, req.connection.remoteAddress, req.method, domain);
+    logger(type, req.url, JSON.stringify(req.params), "success", userId, req.connection.remoteAddress, req.method, domain, req.cookies.token);
     next();
 })
+
 
 app.use(express.static(__dirname + "/public/resources/images"));
 

@@ -5,18 +5,14 @@ var userActivity = mongoose.model('userActivity', {
         type: String
         // enum: ['log-in', 'log-out', 'process', 'object', 'form', 'workitem', 'page']
     },
-    queryParams: {
+    url: {
         type: String
     },
     params: {
         type: String
     },
-    activityId: {
-        type: String
-    },
     status: {
-        type: String,
-        enum: ['success', 'failure']
+        type: String
     },
     userId: {
         type: String
