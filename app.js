@@ -14,6 +14,8 @@ const jsonwebtoken = require('jsonwebtoken');
 const bodyparser = require('body-parser');
 //Library to parse the cookie from the request
 const cookieParser = require('cookie-parser');
+var { userActivity } = require('./schemas/userActivity');
+const { mongoose } = require('./db/database')
 
 //initialing the express application
 var app = express();
@@ -31,19 +33,51 @@ const uam_url = process.env.UAM_URL || "http://127.0.0.1:9100"
 const bpm_url = process.env.BPM_URL || "http://127.0.0.1:9099"
 const dms_url = process.env.DMS_URL || "http://127.0.0.1:9102"
 const obj_url = process.env.OBJ_URL || "http://127.0.0.1:9103"
-
+const logging_enabled = process.env.LOGGING_ENABLED || false
 //the secret for generating the jwt_key. If nothing is provided in the process environment variable, default of alphabetagamma will be used!
 const jwt_key = process.env.JWT_KEY || "alphabetagamma"
 
 //Proxy server port
 var port = process.env.PROXY_PORT || 9101
 
+logger = (activity, subActivity, subsubActivity, activityId, status, userId, ipAddress, method, domain) => {
+    if (logging_enabled == true) {
+        if (userId.length > 0) {
+            user.findById(userId, (err, res1) => {
+                if (res1 != undefined && res1 !== 'undefined' && res1.user != undefined && res1.user !== 'undefined') {
+                    act = new userActivity({
+                        activity, subActivity, subsubActivity, activityId, status, userId, user: res1.user.username, ipAddress, method, logDate: new Date(), domain
+                    });
+                    act.save();
+
+                }
+
+
+            })
+
+        } else {
+            act = new userActivity({
+                activity, subActivity, subsubActivity, activityId, status, userId, user: "", ipAddress, method, logDate: new Date(), domain
+            });
+            act.save();
+
+        }
+
+    }
+}
+
 //Middleware just for logging purposes
 app.use((req, res, next) => {
-    console.log("***REQUEST LOGGING START");
-    console.log("URL->" + req.url);
-    console.log("Method->" + req.method);
-    console.log("***REQUEST LOGGING END");
+    var domain = ""
+    var type = "resource";
+    if (req.url.indexOf("/api") != -1) {
+        type = "API";
+    }
+    var userId = "";
+    if (req.cookies != undefined && req.cookies.token != undefined && req.cookies.token.length > 0) {
+        userId = jsonwebtoken.verify(req.cookies.token, jwt_key).userId;
+    }
+    logger(type, req.url, req.query, req.params, "success", userId, req.connection.remoteAddress, req.method);
     next();
 })
 
@@ -52,7 +86,6 @@ app.use(express.static(__dirname + "/public/resources/images"));
 //Middleware to check whether user is authenticated
 app.use((req, res, next) => {
 
-    console.log("**/Checking Auth entered**");
 
     //req is modified with the domain of the API being called and the same is then removed from the req url
     if (req.url.indexOf("/api/uam") != -1) {
@@ -81,7 +114,7 @@ app.use((req, res, next) => {
         url.indexOf("/bootstrap.min.css") != -1 ||
         (url == "/login" && method == "POST") ||
         (url == "/register" && method == "POST") ||
-        (url.indexOf("/activate")!=-1 && method == "POST") ||
+        (url.indexOf("/activate") != -1 && method == "POST") ||
         (url == "/resendActivationLink" && method == "POST") ||
         (url == "/resetPassword" && method == "POST") ||
         (url.indexOf("/activate") != -1 && method == "GET")) {
@@ -186,7 +219,6 @@ app.use((req, res, next) => {
             res.redirect("/login.html")
         }
     }
-    console.log("**/Checking Auth exited**");
 
 })
 
@@ -200,7 +232,6 @@ app.all("*.html", (req, res) => {
     } else {
         url = bpm_url;
     }
-    console.log(url + req.url);
     //Serving the HTML Pages
     fetch(url + req.url, {
         credentials: "include",
@@ -228,7 +259,6 @@ app.all("*.png", (req, res) => {
     } else {
         url = bpm_url;
     }
-    console.log(url + req.url);
     //Serving the HTML Pages
     fetch(url + req.url, {
         credentials: "include",
@@ -274,7 +304,6 @@ app.all("*.js", (req, res) => {
 
 //Serving the CSS files
 app.all("*.css", (req, res) => {
-    console.log(req.url)
     var url = ""
     if (String(req.url).indexOf("login.css") != -1 || String(req.url).indexOf("bootstrap.min.css") != -1) {
         url = uam_url;
@@ -331,14 +360,7 @@ app.all("*", (req, res, next) => {
         body = JSON.stringify(req.body);
     }
 
-    console.log("@#");
-    console.log(JSON.stringify(req.body));
 
-    console.log(body);
-    console.log(domain);
-    console.log(url);
-    console.log(proxy_url);
-    console.log("@#");
     if (method == "GET" || method == "DELETE") {
 
         fetch(url + proxy_url, {
@@ -366,8 +388,8 @@ app.all("*", (req, res, next) => {
         }).then((prom) => prom.text())
             .then((proxyRes) => {
                 //In case the UAM responds with the token, setting the same in the response object
-                
-                if(proxyRes.indexOf("Activated")==-1 && JSON.parse(proxyRes).token != undefined) {
+
+                if (proxyRes.indexOf("Activated") == -1 && JSON.parse(proxyRes).token != undefined) {
                     res.cookie('token', JSON.parse(proxyRes).token, { httpOnly: true }).send(proxyRes)
 
                 } else {
