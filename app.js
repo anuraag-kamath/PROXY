@@ -88,7 +88,13 @@ app.use((req, res, next) => {
     }
     var userId = "";
     if (req.cookies != undefined && req.cookies.token != undefined && req.cookies.token.length > 0) {
+        try{
         userId = jsonwebtoken.verify(req.cookies.token, jwt_key).userId;
+        }
+        catch(e){
+            req.cookies.token=null;
+        
+        }
     }
     logger(type, req.url, JSON.stringify(req.params), "success", userId, req.connection.remoteAddress, req.method, domain, req.cookies.token);
     next();
@@ -364,7 +370,9 @@ app.all("*", (req, res, next) => {
         //Not an API call
         next()
     }
-
+    console.log(url)
+    console.log(domain)
+    console.log(req.url);
     //url to be called
     proxy_url = req.url
     var body = {};
