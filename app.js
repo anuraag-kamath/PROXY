@@ -43,7 +43,7 @@ const logging_enabled = process.env.LOGGING_ENABLED || "N"
 const jwt_key = process.env.JWT_KEY || "alphabetagamma"
 
 //Proxy server port
-var port = process.env.PROXY_PORT || 9101
+var port = process.env.PROXY_PORT || process.env.PORT || 9101
 
 logger = (activity, url, params, status, userId, ipAddress, method, domain, token) => {
     if (logging_enabled == "Y") {
